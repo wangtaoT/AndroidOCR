@@ -1,12 +1,15 @@
 # AndroidOCR
 Tesseract-OCR 文字识别DEMO
-##main
+##main 主界面
 <img src="https://github.com/wangtaoT/AndroidOCR/blob/master/screenshot%20(1).jpg" width="250" />  
 
-##Clipping size
+##Take pictures 拍照
+<img src="https://github.com/wangtaoT/AndroidOCR/blob/master/screenshot%20.jpg" width="250" />  
+
+##Clipping 截图
 <img src="https://github.com/wangtaoT/AndroidOCR/blob/master/screenshot%20(2).jpg" width="250" />  
 
-##Image Identification
+##Identification 识别
 <img src="https://github.com/wangtaoT/AndroidOCR/blob/master/screenshot%20(3).jpg" width="250" />  
 
 ## Description
