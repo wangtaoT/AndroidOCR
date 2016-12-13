@@ -13,6 +13,6 @@ Tesseract-OCR 文字识别DEMO
 <img src="https://github.com/wangtaoT/AndroidOCR/blob/master/screenshot%20(3).jpg" width="250" />  
 
 ## Description 说明
-app/src/main/assets/tessdata              
-chi_sim.traineddata Chinese中文字典   
+app/src/main/assets/tessdata    
+chi_sim.traineddata Chinese中文字典    
 eng.traineddata English英文字典    
