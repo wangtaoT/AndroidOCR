@@ -162,7 +162,13 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                     }
                     break;
                 case R.id.btn_album: //相册
-
+                    Intent intent = new Intent();
+                /* 开启Pictures画面Type设定为image */
+                    intent.setType("image/*");
+                /* 使用Intent.ACTION_GET_CONTENT这个Action */
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                /* 取得相片后返回本画面 */
+                    startActivityForResult(intent, 1);
                     break;
             }
 
@@ -197,7 +203,7 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                     intent.putExtra("path", PATH + filename);
                     intent.putExtra("width", bitmap.getWidth());
                     intent.putExtra("height", bitmap.getHeight());
-//            intent.putExtra("cropperImage", bitmap);
+//                  intent.putExtra("cropperImage", bitmap);
                     startActivity(intent);
                     bitmap.recycle();
                     finish();
@@ -229,6 +235,28 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
+        showCropperLayout();
+    }
+
+    /*
+    * 获取图片回调
+    * */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            Uri uri = data.getData();
+            Log.e("uri", uri.toString());
+            ContentResolver cr = this.getContentResolver();
+            try {
+                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
+                //与拍照保持一致方便处理
+                bitmap = Utils.rotate(bitmap, 90);
+                mCropImageView.setImageBitmap(bitmap);
+            } catch (Exception e) {
+                Log.e("Exception", e.getMessage(),e);
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
         showCropperLayout();
     }
 
