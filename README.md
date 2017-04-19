@@ -18,6 +18,3 @@ chi_sim.traineddata Chinese中文字典
 eng.traineddata English英文字典
 
 ---
-
-## 字典训练方法
-[链接](http://blog.csdn.net/why20098131)
