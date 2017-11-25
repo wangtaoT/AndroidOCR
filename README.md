@@ -1,7 +1,7 @@
 # AndroidOCR
 Tesseract-OCR 文字识别DEMO
 ## Document/文档
-[详细说明](https://wangtaot.github.io)
+[详细说明](https://wangtaot.github.io/2017/11/25/Android-OCR%E4%B9%8BTess-two/)
 ## main/主界面
 <img src="https://github.com/wangtaoT/AndroidOCR/blob/master/screenshot%20(1).jpg" width="250" />  
 
