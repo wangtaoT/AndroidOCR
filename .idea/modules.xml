@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/AndroidOCR.iml" filepath="$PROJECT_DIR$/.idea/AndroidOCR.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/ocr.iml" filepath="$PROJECT_DIR$/ocr.iml" />
+      <module fileurl="file://D:\androidproject\MyProject\AndroidOCR\app\app.iml" filepath="D:\androidproject\MyProject\AndroidOCR\app\app.iml" />
+      <module fileurl="file://D:\androidproject\MyProject\AndroidOCR\ocr.iml" filepath="D:\androidproject\MyProject\AndroidOCR\ocr.iml" />
     </modules>
   </component>
 </project>

@@ -253,7 +253,7 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                 bitmap = Utils.rotate(bitmap, 90);
                 mCropImageView.setImageBitmap(bitmap);
             } catch (Exception e) {
-                Log.e("Exception", e.getMessage(),e);
+                Log.e("Exception", e.getMessage(), e);
             }
         }
         super.onActivityResult(requestCode, resultCode, data);

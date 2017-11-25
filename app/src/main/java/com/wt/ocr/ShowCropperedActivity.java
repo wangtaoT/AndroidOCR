@@ -83,10 +83,10 @@ public class ShowCropperedActivity extends AppCompatActivity {
         imageView.setImageURI(uri);
 
         baseApi.init(LANGUAGE_PATH, LANGUAGE);
+        //设置设别模式
         baseApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO);
 
         myThread.start();
-
     }
 
 
