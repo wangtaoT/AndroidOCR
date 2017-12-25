@@ -133,34 +133,61 @@ public class ShowCropperedActivity extends AppCompatActivity {
      * 二值化
      *
      * @param bitmap22
+     * @param tmp      二值化阈值 默认100
      * @return
      */
-    private Bitmap binaryzation(Bitmap bitmap22) {
-        //bitmapBina = bitmap22.copy(Config.ARGB_8888, true);
+    private Bitmap binaryzation(Bitmap bitmap22, int tmp) {
+        // 获取图片的宽和高
         int width = bitmap22.getWidth();
         int height = bitmap22.getHeight();
+        // 创建二值化图像
+        Bitmap bitmap = null;
+        bitmap = bitmap22.copy(Bitmap.Config.ARGB_8888, true);
+        // 遍历原始图像像素,并进行二值化处理
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                int col = bitmap22.getPixel(i, j);
-                int alpha = col & 0xFF000000;
-                int red = (col & 0x00FF0000) >> 16;
-                int green = (col & 0x0000FF00) >> 8;
-                int blue = (col & 0x000000FF);
-                //用公式X = 0.3×R+0.59×G+0.11×B计算出X代替原来的RGB
-                int gray = (int) ((float) red * 0.3 + (float) green * 0.59 + (float) blue * 0.11);
+                // 得到当前的像素值
+                int pixel = bitmap.getPixel(i, j);
+                // 得到Alpha通道的值
+                int alpha = pixel & 0xFF000000;
+                // 得到Red的值
+                int red = (pixel & 0x00FF0000) >> 16;
+                // 得到Green的值
+                int green = (pixel & 0x0000FF00) >> 8;
+                // 得到Blue的值
+                int blue = pixel & 0x000000FF;
 
-                if (gray <= 160) {
+                if (red > tmp) {
+                    red = 255;
+                } else {
+                    red = 0;
+                }
+                if (blue > tmp) {
+                    blue = 255;
+                } else {
+                    blue = 0;
+                }
+                if (green > tmp) {
+                    green = 255;
+                } else {
+                    green = 0;
+                }
+
+                // 通过加权平均算法,计算出最佳像素值
+                int gray = (int) ((float) red * 0.3 + (float) green * 0.59 + (float) blue * 0.11);
+                // 对图像设置黑白图
+                if (gray <= 95) {
                     gray = 0;
                 } else {
                     gray = 255;
                 }
-                //新的ARGB
-                int newColor = alpha | (gray << 16) | (gray << 8) | gray;
-
-                bitmap22.setPixel(i, j, newColor);
+                // 得到新的像素值
+                int newPiexl = alpha | (gray << 16) | (gray << 8) | gray;
+                // 赋予新图像的像素
+                bitmap.setPixel(i, j, newPiexl);
             }
         }
-        return bitmap22;
+        return bitmap;
     }
 
     /**
@@ -169,6 +196,7 @@ public class ShowCropperedActivity extends AppCompatActivity {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
+//            baseApi.setImage(binaryzation(getBitmapFromUri(uri), 100));
             baseApi.setImage(convertGray(getBitmapFromUri(uri)));
             result = baseApi.getUTF8Text();
             baseApi.end();
@@ -176,6 +204,7 @@ public class ShowCropperedActivity extends AppCompatActivity {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
+//                    imageView2.setImageBitmap(binaryzation(getBitmapFromUri(uri), 100));
                     imageView2.setImageBitmap(convertGray(getBitmapFromUri(uri)));
                     textView.setText(result);
                     dialog.dismiss();
