@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.wt.ocr.TakePhoteActivity.isTransverse;
+
 /**
  * 自定义相机
  * Created by Administrator on 2016/12/8.
@@ -221,9 +223,16 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         p.setPreviewSize(previewSize.width, previewSize.height);
         p.setPictureSize(previewSize.width, previewSize.height);
         p.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-        if (getContext().getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
-            camera.setDisplayOrientation(90);
-            p.setRotation(90);
+
+        if (isTransverse) {
+            if (getContext().getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
+                camera.setDisplayOrientation(90);
+                p.setRotation(90);
+            }
+        } else {
+            if (getContext().getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
+                camera.setDisplayOrientation(90);
+            }
         }
     }
 

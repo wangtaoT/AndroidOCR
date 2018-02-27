@@ -46,6 +46,12 @@ import java.io.OutputStream;
  * Created by Administrator on 2016/12/8.
  */
 public class TakePhoteActivity extends AppCompatActivity implements CameraPreview.OnCameraStatusListener, SensorEventListener {
+
+
+    //true:横屏   false:竖屏
+    public static final boolean isTransverse = true;
+
+
     private static final String TAG = "TakePhoteActivity";
     public static final Uri IMAGE_URI = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
     public static final String PATH = Environment.getExternalStorageDirectory().toString() + "/AndroidMedia/";
@@ -109,27 +115,40 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
     @Override
     protected void onResume() {
         super.onResume();
-        if (!isRotated) {
-            TextView tvHint = (TextView) findViewById(R.id.hint);
-            ObjectAnimator animator = ObjectAnimator.ofFloat(tvHint, "rotation", 0f, 90f);
-            animator.setStartDelay(800);
-            animator.setDuration(500);
-            animator.setInterpolator(new LinearInterpolator());
-            animator.start();
-            ImageView btnShutter = (ImageView) findViewById(R.id.btn_shutter);
-            ObjectAnimator animator1 = ObjectAnimator.ofFloat(btnShutter, "rotation", 0f, 90f);
-            animator1.setStartDelay(800);
-            animator1.setDuration(500);
-            animator1.setInterpolator(new LinearInterpolator());
-            animator1.start();
-            View view = findViewById(R.id.crop_hint);
-            AnimatorSet animSet = new AnimatorSet();
-            ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "rotation", 0f, 90f);
-            ObjectAnimator moveIn = ObjectAnimator.ofFloat(view, "translationX", 0f, -50f);
-            animSet.play(animator2).before(moveIn);
-            animSet.setDuration(10);
-            animSet.start();
-            isRotated = true;
+        if (isTransverse) {
+            if (!isRotated) {
+                TextView tvHint = (TextView) findViewById(R.id.hint);
+                ObjectAnimator animator = ObjectAnimator.ofFloat(tvHint, "rotation", 0f, 90f);
+                animator.setStartDelay(800);
+                animator.setDuration(500);
+                animator.setInterpolator(new LinearInterpolator());
+                animator.start();
+                ImageView btnShutter = (ImageView) findViewById(R.id.btn_shutter);
+                ObjectAnimator animator1 = ObjectAnimator.ofFloat(btnShutter, "rotation", 0f, 90f);
+                animator1.setStartDelay(800);
+                animator1.setDuration(500);
+                animator1.setInterpolator(new LinearInterpolator());
+                animator1.start();
+                View view = findViewById(R.id.crop_hint);
+                AnimatorSet animSet = new AnimatorSet();
+                ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "rotation", 0f, 90f);
+                ObjectAnimator moveIn = ObjectAnimator.ofFloat(view, "translationX", 0f, -50f);
+                animSet.play(animator2).before(moveIn);
+                animSet.setDuration(10);
+                animSet.start();
+                isRotated = true;
+            }
+        } else {
+            if (!isRotated) {
+                View view = findViewById(R.id.crop_hint);
+                AnimatorSet animSet = new AnimatorSet();
+                ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "rotation", 0f, 90f);
+                ObjectAnimator moveIn = ObjectAnimator.ofFloat(view, "translationX", 0f, -50f);
+                animSet.play(animator2).before(moveIn);
+                animSet.setDuration(10);
+                animSet.start();
+                isRotated = true;
+            }
         }
         mSensorManager.registerListener(this, mAccel, SensorManager.SENSOR_DELAY_UI);
     }
@@ -171,7 +190,6 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                     startActivityForResult(intent, 1);
                     break;
             }
-
         }
     };
 
@@ -190,7 +208,9 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                 case R.id.btn_startcropper:
                     //获取截图并旋转90度
                     Bitmap cropperBitmap = mCropImageView.getCroppedImage();
-                    Bitmap bitmap = Utils.rotate(cropperBitmap, -90);
+
+                    Bitmap bitmap;
+                    bitmap = Utils.rotate(cropperBitmap, -90);
 
                     // 系统时间
                     long dateTaken = System.currentTimeMillis();
@@ -223,18 +243,20 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
         Log.i("TAG", "==onCameraStopped==");
         // 创建图像
         Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+        if (!isTransverse) {
+            bitmap = Utils.rotate(bitmap, 90);
+        }
         // 系统时间
         long dateTaken = System.currentTimeMillis();
         // 图像名称
         String filename = DateFormat.format("yyyy-MM-dd kk.mm.ss", dateTaken).toString() + ".jpg";
         // 存储图像（PATH目录）
         Uri source = insertImage(getContentResolver(), filename, dateTaken, PATH, filename, bitmap, data);
+
         //准备截图
-        try {
-            mCropImageView.setImageBitmap(MediaStore.Images.Media.getBitmap(this.getContentResolver(), source));
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
-        }
+        bitmap = Utils.rotate(bitmap, 90);
+        mCropImageView.setImageBitmap(bitmap);
         showCropperLayout();
     }
 
