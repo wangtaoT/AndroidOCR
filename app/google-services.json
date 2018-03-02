@@ -1,0 +1,43 @@
+{
+  "project_info": {
+    "project_number": "220740679524",
+    "project_id": "androidocr-196803"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:220740679524:android:491dca6eb0989d5b",
+        "android_client_info": {
+          "package_name": "com.wt.ocr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "220740679524-ban0i86aejdj3387356lrc1l5638oup3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6NJet6K0HLOV1JZ7G5sN3ID79XWPVa9g"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 2,
+          "analytics_property": {
+            "tracking_id": "UA-108813768-1"
+          }
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

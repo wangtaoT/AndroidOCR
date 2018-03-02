@@ -2,16 +2,17 @@ package com.wt.ocr;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
+
+import com.google.android.gms.analytics.HitBuilders;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private ImageView imageView;
 
@@ -28,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 deepFile("tessdata");
             }
         }).start();
+
+        sendScreenImageName();
     }
 
     public void onClick(View view) {
@@ -35,6 +38,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btn_camera:
                 Intent intent = new Intent(this, TakePhoteActivity.class);
                 startActivity(intent);
+
+                getTracker().send(new HitBuilders.EventBuilder()
+                        .setCategory("Action")
+                        .setAction("拍照")
+                        .build());
                 break;
         }
     }
@@ -75,5 +83,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+
+    private void sendScreenImageName() {
+        getTracker().setScreenName("Activity-" + "首页");
+        getTracker().send(new HitBuilders.ScreenViewBuilder().build());
     }
 }
