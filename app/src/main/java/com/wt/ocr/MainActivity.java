@@ -46,7 +46,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         switch (view.getId()) {
             case R.id.btn_camera:
                 checkSelfPermission();
-
                 //google分析
                 getTracker().send(new HitBuilders.EventBuilder()
                         .setCategory("Action")
@@ -77,9 +76,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 InputStream is = getAssets().open(path);
                 FileOutputStream fos = new FileOutputStream(new File(newPath + path));
                 byte[] buffer = new byte[1024];
-                int count = 0;
                 while (true) {
-                    count++;
                     int len = is.read(buffer);
                     if (len == -1) {
                         break;

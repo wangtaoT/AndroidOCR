@@ -19,7 +19,7 @@ public class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         //google分析
-        AnalyticsApplication application = (AnalyticsApplication) getApplication();
+        App application = (App) getApplication();
         mTracker = application.getDefaultTracker();
     }
 

@@ -123,12 +123,14 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                 animator.setDuration(500);
                 animator.setInterpolator(new LinearInterpolator());
                 animator.start();
+
                 ImageView btnShutter = (ImageView) findViewById(R.id.btn_shutter);
                 ObjectAnimator animator1 = ObjectAnimator.ofFloat(btnShutter, "rotation", 0f, 90f);
                 animator1.setStartDelay(800);
                 animator1.setDuration(500);
                 animator1.setInterpolator(new LinearInterpolator());
                 animator1.start();
+
                 View view = findViewById(R.id.crop_hint);
                 AnimatorSet animSet = new AnimatorSet();
                 ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "rotation", 0f, 90f);
@@ -136,6 +138,12 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                 animSet.play(animator2).before(moveIn);
                 animSet.setDuration(10);
                 animSet.start();
+
+                ObjectAnimator animator3 = ObjectAnimator.ofFloat(btnAlbum, "rotation", 0f, 90f);
+                animator3.setStartDelay(800);
+                animator3.setDuration(500);
+                animator3.setInterpolator(new LinearInterpolator());
+                animator3.start();
                 isRotated = true;
             }
         } else {
@@ -182,11 +190,11 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                     break;
                 case R.id.btn_album: //相册
                     Intent intent = new Intent();
-                /* 开启Pictures画面Type设定为image */
+                    /* 开启Pictures画面Type设定为image */
                     intent.setType("image/*");
-                /* 使用Intent.ACTION_GET_CONTENT这个Action */
+                    /* 使用Intent.ACTION_GET_CONTENT这个Action */
                     intent.setAction(Intent.ACTION_GET_CONTENT);
-                /* 取得相片后返回本画面 */
+                    /* 取得相片后返回本画面 */
                     startActivityForResult(intent, 1);
                     break;
             }
@@ -195,8 +203,6 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
 
     /**
      * 截图界面
-     *
-     * @param view
      */
     private View.OnClickListener cropcper = new View.OnClickListener() {
         @Override
@@ -235,8 +241,6 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
     /**
      * 拍照成功后回调
      * 存储图片并显示截图界面
-     *
-     * @param data
      */
     @Override
     public void onCameraStopped(byte[] data) {
@@ -261,8 +265,8 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
     }
 
     /*
-    * 获取图片回调
-    * */
+     * 获取图片回调
+     * */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
@@ -348,8 +352,6 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
 
     /**
      * 位移 自动对焦
-     *
-     * @param event
      */
     @Override
     public void onSensorChanged(SensorEvent event) {

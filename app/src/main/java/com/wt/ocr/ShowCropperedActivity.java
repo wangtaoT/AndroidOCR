@@ -36,6 +36,7 @@ public class ShowCropperedActivity extends AppCompatActivity {
     private static final String TAG = "ShowCropperedActivity";
     private ImageView imageView;
     private ImageView imageView2;
+    private ImageView imageView3;
     private TextView textView;
 
     private Uri uri;
@@ -63,6 +64,7 @@ public class ShowCropperedActivity extends AppCompatActivity {
 
         imageView = (ImageView) findViewById(R.id.image);
         imageView2 = (ImageView) findViewById(R.id.image2);
+        imageView3 = (ImageView) findViewById(R.id.image3);
         textView = (TextView) findViewById(R.id.text);
 
         int width = getIntent().getIntExtra("width", 0);
@@ -92,15 +94,11 @@ public class ShowCropperedActivity extends AppCompatActivity {
 
     /**
      * uri转bitmap
-     *
-     * @param uri
-     * @return
      */
     private Bitmap getBitmapFromUri(Uri uri) {
         try {
             // 读取uri所在的图片
-            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-            return bitmap;
+            return MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
         } catch (Exception e) {
             Log.e("[Android]", e.getMessage());
             Log.e("[Android]", "目录为：" + uri);
@@ -111,9 +109,6 @@ public class ShowCropperedActivity extends AppCompatActivity {
 
     /**
      * 灰度化处理
-     *
-     * @param bitmap3
-     * @return
      */
     public Bitmap convertGray(Bitmap bitmap3) {
         colorMatrix = new ColorMatrix();
@@ -132,16 +127,14 @@ public class ShowCropperedActivity extends AppCompatActivity {
     /**
      * 二值化
      *
-     * @param bitmap22
-     * @param tmp      二值化阈值 默认100
-     * @return
+     * @param tmp 二值化阈值 默认100
      */
     private Bitmap binaryzation(Bitmap bitmap22, int tmp) {
         // 获取图片的宽和高
         int width = bitmap22.getWidth();
         int height = bitmap22.getHeight();
         // 创建二值化图像
-        Bitmap bitmap = null;
+        Bitmap bitmap;
         bitmap = bitmap22.copy(Bitmap.Config.ARGB_8888, true);
         // 遍历原始图像像素,并进行二值化处理
         for (int i = 0; i < width; i++) {
@@ -196,22 +189,20 @@ public class ShowCropperedActivity extends AppCompatActivity {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-//            baseApi.setImage(binaryzation(getBitmapFromUri(uri), 100));
-            baseApi.setImage(convertGray(getBitmapFromUri(uri)));
+            final Bitmap bitmap_1 = convertGray(getBitmapFromUri(uri));
+
+            baseApi.setImage(bitmap_1);
             result = baseApi.getUTF8Text();
             baseApi.end();
 
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-//                    imageView2.setImageBitmap(binaryzation(getBitmapFromUri(uri), 100));
-                    imageView2.setImageBitmap(convertGray(getBitmapFromUri(uri)));
+                    imageView2.setImageBitmap(bitmap_1);
                     textView.setText(result);
                     dialog.dismiss();
                 }
             });
         }
     };
-
-
 }

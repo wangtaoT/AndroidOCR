@@ -224,16 +224,16 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         p.setPictureSize(previewSize.width, previewSize.height);
         p.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 
-        if (isTransverse) {
+//        if (isTransverse) {
+//            if (getContext().getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
+//                camera.setDisplayOrientation(90);
+//                p.setRotation(90);
+//            }
+//        } else {
             if (getContext().getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
                 camera.setDisplayOrientation(90);
-                p.setRotation(90);
             }
-        } else {
-            if (getContext().getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
-                camera.setDisplayOrientation(90);
-            }
-        }
+//        }
     }
 
     // 进行拍照，并将拍摄的照片传入PictureCallback接口的onPictureTaken方法
