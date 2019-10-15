@@ -17,7 +17,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.View;
@@ -48,24 +50,24 @@ import java.io.OutputStream;
 public class TakePhoteActivity extends AppCompatActivity implements CameraPreview.OnCameraStatusListener, SensorEventListener {
 
 
+    private             Context context;
     //true:横屏   false:竖屏
     public static final boolean isTransverse = true;
 
+    private static final String TAG       = "TakePhoteActivity";
+    public static final  Uri    IMAGE_URI = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
 
-    private static final String TAG = "TakePhoteActivity";
-    public static final Uri IMAGE_URI = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-    public static final String PATH = Environment.getExternalStorageDirectory().toString() + "/AndroidMedia/";
-    CameraPreview mCameraPreview;
-    CropImageView mCropImageView;
-    RelativeLayout mTakePhotoLayout;
-    LinearLayout mCropperLayout;
+    private String PATH;
 
-    private ImageView btnClose;
-    private ImageView btnShutter;
-    private Button btnAlbum;
-
-    private ImageView btnStartCropper;
-    private ImageView btnCloseCropper;
+    private CameraPreview  mCameraPreview;
+    private CropImageView  mCropImageView;
+    private RelativeLayout mTakePhotoLayout;
+    private LinearLayout   mCropperLayout;
+    private ImageView      btnClose;
+    private ImageView      btnShutter;
+    private Button         btnAlbum;
+    private ImageView      btnStartCropper;
+    private ImageView      btnCloseCropper;
 
 
     /**
@@ -83,25 +85,27 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
         setContentView(R.layout.activity_take_phote);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        context = this;
+        PATH = getExternalCacheDir() + "/AndroidMedia/";
 
-        btnClose = (ImageView) findViewById(R.id.btn_close);
+        btnClose = findViewById(R.id.btn_close);
         btnClose.setOnClickListener(onClickListener);
-        btnShutter = (ImageView) findViewById(R.id.btn_shutter);
+        btnShutter = findViewById(R.id.btn_shutter);
         btnShutter.setOnClickListener(onClickListener);
-        btnAlbum = (Button) findViewById(R.id.btn_album);
+        btnAlbum = findViewById(R.id.btn_album);
         btnAlbum.setOnClickListener(onClickListener);
 
-        btnStartCropper = (ImageView) findViewById(R.id.btn_startcropper);
+        btnStartCropper = findViewById(R.id.btn_startcropper);
         btnStartCropper.setOnClickListener(cropcper);
-        btnCloseCropper = (ImageView) findViewById(R.id.btn_closecropper);
+        btnCloseCropper = findViewById(R.id.btn_closecropper);
         btnCloseCropper.setOnClickListener(cropcper);
 
-        mTakePhotoLayout = (RelativeLayout) findViewById(R.id.take_photo_layout);
-        mCameraPreview = (CameraPreview) findViewById(R.id.cameraPreview);
-        FocusView focusView = (FocusView) findViewById(R.id.view_focus);
+        mTakePhotoLayout = findViewById(R.id.take_photo_layout);
+        mCameraPreview = findViewById(R.id.cameraPreview);
+        FocusView focusView = findViewById(R.id.view_focus);
 
-        mCropperLayout = (LinearLayout) findViewById(R.id.cropper_layout);
-        mCropImageView = (CropImageView) findViewById(R.id.CropImageView);
+        mCropperLayout = findViewById(R.id.cropper_layout);
+        mCropImageView = findViewById(R.id.CropImageView);
         mCropImageView.setGuidelines(2);
 
         mCameraPreview.setFocusView(focusView);
@@ -117,14 +121,14 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
         super.onResume();
         if (isTransverse) {
             if (!isRotated) {
-                TextView tvHint = (TextView) findViewById(R.id.hint);
+                TextView tvHint = findViewById(R.id.hint);
                 ObjectAnimator animator = ObjectAnimator.ofFloat(tvHint, "rotation", 0f, 90f);
                 animator.setStartDelay(800);
                 animator.setDuration(500);
                 animator.setInterpolator(new LinearInterpolator());
                 animator.start();
 
-                ImageView btnShutter = (ImageView) findViewById(R.id.btn_shutter);
+                ImageView btnShutter = findViewById(R.id.btn_shutter);
                 ObjectAnimator animator1 = ObjectAnimator.ofFloat(btnShutter, "rotation", 0f, 90f);
                 animator1.setStartDelay(800);
                 animator1.setDuration(500);
@@ -224,7 +228,7 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                     String filename = DateFormat.format("yyyy-MM-dd kk.mm.ss", dateTaken).toString() + ".jpg";
                     Uri uri = insertImage(getContentResolver(), filename, dateTaken, PATH, filename, bitmap, null);
 
-                    Intent intent = new Intent(TakePhoteActivity.this, ShowCropperedActivity.class);
+                    Intent intent = new Intent(context, ShowCropperedActivity.class);
                     intent.setData(uri);
                     intent.putExtra("path", PATH + filename);
                     intent.putExtra("width", bitmap.getWidth());
@@ -307,9 +311,6 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                     outputStream.write(jpegData);
                 }
             }
-        } catch (FileNotFoundException e) {
-            Log.e(TAG, e.getMessage());
-            return null;
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
             return null;
@@ -342,12 +343,12 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
     }
 
 
-    private float mLastX = 0;
-    private float mLastY = 0;
-    private float mLastZ = 0;
-    private boolean mInitialized = false;
+    private float         mLastX       = 0;
+    private float         mLastY       = 0;
+    private float         mLastZ       = 0;
+    private boolean       mInitialized = false;
     private SensorManager mSensorManager;
-    private Sensor mAccel;
+    private Sensor        mAccel;
 
 
     /**

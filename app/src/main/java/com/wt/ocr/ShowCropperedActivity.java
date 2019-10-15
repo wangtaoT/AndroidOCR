@@ -1,6 +1,7 @@
 package com.wt.ocr;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
@@ -10,7 +11,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -28,66 +31,72 @@ import com.wt.ocr.utils.Utils;
 
 public class ShowCropperedActivity extends AppCompatActivity {
 
+    private              Context context;
     //sd卡路径
-    private static String LANGUAGE_PATH = "";
+    private static       String  LANGUAGE_PATH = "";
     //识别语言
-    private static final String LANGUAGE = "chi_sim";//chi_sim | eng
+    private static final String  LANGUAGE      = "chi_sim";//chi_sim | eng
 
-    private static final String TAG = "ShowCropperedActivity";
-    private ImageView imageView;
-    private ImageView imageView2;
-    private ImageView imageView3;
-    private TextView textView;
+    private static final String    TAG = "ShowCropperedActivity";
+    private              ImageView imageView;
+    private              ImageView imageView2;
+    private              TextView  textView;
 
-    private Uri uri;
+    private int    width;
+    private int    height;
+    private Uri    uri;
     private String result;
-    private TessBaseAPI baseApi = new TessBaseAPI();
-    private Handler handler = new Handler();
+
+    private TessBaseAPI    baseApi = new TessBaseAPI();
+    private Handler        handler = new Handler();
     private ProgressDialog dialog;
 
-    int endWidth, endHeight;
     private ColorMatrix colorMatrix;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_croppered);
-
+        context = this;
         LANGUAGE_PATH = getExternalFilesDir("") + "/";
         Log.e("---------", LANGUAGE_PATH);
 
-        Thread myThread = new Thread(runnable);
-        dialog = new ProgressDialog(this);
+        width = getIntent().getIntExtra("width", 0);
+        height = getIntent().getIntExtra("height", 0);
+        uri = getIntent().getData();
+
+        initView();
+        initTess();
+    }
+
+    private void initView() {
+        imageView = findViewById(R.id.image);
+        imageView2 = findViewById(R.id.image2);
+        textView = findViewById(R.id.text);
+
+        dialog = new ProgressDialog(context);
         dialog.setMessage("正在识别...");
         dialog.setCancelable(false);
         dialog.show();
 
-        imageView = (ImageView) findViewById(R.id.image);
-        imageView2 = (ImageView) findViewById(R.id.image2);
-        imageView3 = (ImageView) findViewById(R.id.image3);
-        textView = (TextView) findViewById(R.id.text);
-
-        int width = getIntent().getIntExtra("width", 0);
-        int height = getIntent().getIntExtra("height", 0);
         if (width != 0 && height != 0) {
             int screenWidth = Utils.getWidthInPx(this);
             float scale = (float) screenWidth / (float) width;
             final ViewGroup.LayoutParams lp = imageView.getLayoutParams();
             int imgHeight = (int) (scale * height);
-            endWidth = screenWidth;
-            endHeight = imgHeight;
             lp.height = imgHeight;
             imageView.setLayoutParams(lp);
             Log.e(TAG, "imageView.getLayoutParams().width:" + imageView.getLayoutParams().width);
         }
-
-        uri = getIntent().getData();
         imageView.setImageURI(uri);
+    }
 
+    private void initTess() {
+        //字典库
         baseApi.init(LANGUAGE_PATH, LANGUAGE);
         //设置设别模式
         baseApi.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO);
-
+        Thread myThread = new Thread(runnable);
         myThread.start();
     }
 

@@ -1,12 +1,15 @@
 package com.wt.ocr;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -21,7 +24,9 @@ import java.io.InputStream;
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private static final int PERMISSIONS_REQUEST_CAMERA = 454;
-    static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
+
+    static final String  PERMISSION_CAMERA = Manifest.permission.CAMERA;
+    private      Context context;
 
     private ImageView imageView;
 
@@ -29,7 +34,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        imageView = (ImageView) findViewById(R.id.btn_camera);
+        context = this;
+        imageView = findViewById(R.id.btn_camera);
         imageView.setOnClickListener(this);
 
         new Thread(new Runnable() {
@@ -43,15 +49,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.btn_camera:
-                checkSelfPermission();
-                //google分析
-                getTracker().send(new HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction("拍照")
-                        .build());
-                break;
+        if (view.getId() == R.id.btn_camera) {
+            checkSelfPermission();
+            //google分析
+            getTracker().send(new HitBuilders.EventBuilder()
+                    .setCategory("Action")
+                    .setAction("拍照")
+                    .build());
         }
     }
 
@@ -102,15 +106,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case PERMISSIONS_REQUEST_CAMERA: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Intent intent = new Intent(this, TakePhoteActivity.class);
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(this, "请开启摄像头权限", Toast.LENGTH_SHORT).show();
-                }
-                return;
+        if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Intent intent = new Intent(context, TakePhoteActivity.class);
+                startActivity(intent);
+            } else {
+                Toast.makeText(context, "请开启摄像头权限", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -122,7 +123,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         if (ContextCompat.checkSelfPermission(this, PERMISSION_CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{PERMISSION_CAMERA}, PERMISSIONS_REQUEST_CAMERA);
         } else {
-            Intent intent = new Intent(this, TakePhoteActivity.class);
+            Intent intent = new Intent(context, TakePhoteActivity.class);
             startActivity(intent);
         }
     }

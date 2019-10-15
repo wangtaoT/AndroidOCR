@@ -33,7 +33,7 @@ public class Utils {
      * @param previewRight
      * @param previewTop
      * @param previewBottom
-     * @return Rect(left,top,right,bottom) : left、top、right、bottom是以显示区域中心为原点的坐标
+     * @return Rect(left, top, right, bottom) : left、top、right、bottom是以显示区域中心为原点的坐标
      */
     public static Rect calculateTapArea(int focusWidth, int focusHeight,
                                         float areaMultiple, float x, float y, int previewleft,
@@ -65,6 +65,7 @@ public class Utils {
     /**
      * 检测摄像头设备是否可用
      * Check if this device has a camera
+     *
      * @param context
      * @return
      */
@@ -79,30 +80,8 @@ public class Utils {
     }
 
     /**
-     * @param context
-     * @return app_cache_path/dirName
-     */
-    public static String getDBDir(Context context) {
-        String path = null;
-        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            path = Environment.getExternalStorageDirectory().getAbsolutePath() +
-                    File.separator + "bbk" + File.separator + "cloudteacher" + File.separator + "db";
-            File externalCacheDir = context.getExternalCacheDir();
-            if (externalCacheDir != null) {
-                path = externalCacheDir.getPath();
-            }
-        }
-        if (path == null) {
-            File cacheDir = context.getCacheDir();
-            if (cacheDir != null && cacheDir.exists()) {
-                path = cacheDir.getPath();
-            }
-        }
-        return path;
-    }
-
-    /**
      * bitmap旋转
+     *
      * @param b
      * @param degrees
      * @return
