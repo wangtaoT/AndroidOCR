@@ -23,9 +23,11 @@ import java.io.InputStream;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
-    private static final int PERMISSIONS_REQUEST_CAMERA = 454;
+    private static final int PERMISSIONS_REQUEST_CAMERA        = 454;
+    private static final int PERMISSIONS_REQUEST_WRITE_STORAGE = 455;
 
-    static final String  PERMISSION_CAMERA = Manifest.permission.CAMERA;
+    static final String  PERMISSION_CAMERA        = Manifest.permission.CAMERA;
+    static final String  PERMISSION_WRITE_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
     private      Context context;
 
     private ImageView imageView;
@@ -106,12 +108,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
+        if (requestCode == PERMISSIONS_REQUEST_CAMERA || requestCode == PERMISSIONS_REQUEST_WRITE_STORAGE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Intent intent = new Intent(context, TakePhoteActivity.class);
                 startActivity(intent);
             } else {
-                Toast.makeText(context, "请开启摄像头权限", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "请开启权限", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -122,6 +124,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     void checkSelfPermission() {
         if (ContextCompat.checkSelfPermission(this, PERMISSION_CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{PERMISSION_CAMERA}, PERMISSIONS_REQUEST_CAMERA);
+        } else if (ContextCompat.checkSelfPermission(this, PERMISSION_WRITE_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{PERMISSION_WRITE_STORAGE}, PERMISSIONS_REQUEST_WRITE_STORAGE);
         } else {
             Intent intent = new Intent(context, TakePhoteActivity.class);
             startActivity(intent);
