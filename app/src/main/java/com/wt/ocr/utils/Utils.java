@@ -1,11 +1,18 @@
 package com.wt.ocr.utils;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 
 import java.io.File;
@@ -21,96 +28,155 @@ public class Utils {
         return dMetrics;
     }
 
-    /**
-     * 计算焦点及测光区域
-     *
-     * @param focusWidth
-     * @param focusHeight
-     * @param areaMultiple
-     * @param x
-     * @param y
-     * @param previewleft
-     * @param previewRight
-     * @param previewTop
-     * @param previewBottom
-     * @return Rect(left, top, right, bottom) : left、top、right、bottom是以显示区域中心为原点的坐标
-     */
-    public static Rect calculateTapArea(int focusWidth, int focusHeight,
-                                        float areaMultiple, float x, float y, int previewleft,
-                                        int previewRight, int previewTop, int previewBottom) {
-        int areaWidth = (int) (focusWidth * areaMultiple);
-        int areaHeight = (int) (focusHeight * areaMultiple);
-        int centerX = (previewleft + previewRight) / 2;
-        int centerY = (previewTop + previewBottom) / 2;
-        double unitx = ((double) previewRight - (double) previewleft) / 2000;
-        double unity = ((double) previewBottom - (double) previewTop) / 2000;
-        int left = clamp((int) (((x - areaWidth / 2) - centerX) / unitx),
-                -1000, 1000);
-        int top = clamp((int) (((y - areaHeight / 2) - centerY) / unity),
-                -1000, 1000);
-        int right = clamp((int) (left + areaWidth / unitx), -1000, 1000);
-        int bottom = clamp((int) (top + areaHeight / unity), -1000, 1000);
-
-        return new Rect(left, top, right, bottom);
-    }
-
-    public static int clamp(int x, int min, int max) {
-        if (x > max)
-            return max;
-        if (x < min)
-            return min;
-        return x;
-    }
-
-    /**
-     * 检测摄像头设备是否可用
-     * Check if this device has a camera
-     *
-     * @param context
-     * @return
-     */
-    public static boolean checkCameraHardware(Context context) {
-        if (context != null && context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            // this device has a camera
-            return true;
-        } else {
-            // no camera on this device
-            return false;
-        }
-    }
-
-    /**
-     * bitmap旋转
-     *
-     * @param b
-     * @param degrees
-     * @return
-     */
-    public static Bitmap rotate(Bitmap b, int degrees) {
-        if (degrees != 0 && b != null) {
-            Matrix m = new Matrix();
-            m.setRotate(degrees, (float) b.getWidth() / 2, (float) b.getHeight() / 2);
-            try {
-                Bitmap b2 = Bitmap.createBitmap(
-                        b, 0, 0, b.getWidth(), b.getHeight(), m, true);
-                if (b != b2) {
-                    b.recycle();  //Android开发网再次提示Bitmap操作完应该显示的释放
-                    b = b2;
-                }
-            } catch (OutOfMemoryError ex) {
-                // Android123建议大家如何出现了内存不足异常，最好return 原始的bitmap对象。.
-            }
-        }
-        return b;
-    }
-
-    public static final int getHeightInPx(Context context) {
-        final int height = context.getResources().getDisplayMetrics().heightPixels;
-        return height;
-    }
-
     public static final int getWidthInPx(Context context) {
         final int width = context.getResources().getDisplayMetrics().widthPixels;
         return width;
+    }
+
+    public static String getFilePathByUri(Context context, Uri uri) {
+        String path = null;
+        String scheme = uri.getScheme();
+
+        // 以 file:// 开头的
+        if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
+            path = uri.getPath();
+            return path;
+        }
+        // 以 content:// 开头的，比如 content://media/extenral/images/media/17766
+        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme()) && Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.Images.Media.DATA}, null, null, null);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                    if (columnIndex > -1) {
+                        path = cursor.getString(columnIndex);
+                    }
+                }
+                cursor.close();
+            }
+            return path;
+        }
+        // 4.4及之后的 是以 content:// 开头的，比如 content://com.android.providers.media.documents/document/image%3A235700
+        if (ContentResolver.SCHEME_CONTENT.equals(uri.getScheme()) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            if (DocumentsContract.isDocumentUri(context, uri)) {
+                if (isExternalStorageDocument(uri)) {
+                    // ExternalStorageProvider
+                    final String docId = DocumentsContract.getDocumentId(uri);
+                    final String[] split = docId.split(":");
+                    final String type = split[0];
+                    if ("primary".equalsIgnoreCase(type)) {
+                        path = Environment.getExternalStorageDirectory() + "/" + split[1];
+                        return path;
+                    }
+                } else if (isDownloadsDocument(uri)) {
+                    // DownloadsProvider
+                    final String id = DocumentsContract.getDocumentId(uri);
+                    final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
+                            Long.valueOf(id));
+                    path = getDataColumn(context, contentUri, null, null);
+                    return path;
+                } else if (isMediaDocument(uri)) {
+                    // MediaProvider
+                    final String docId = DocumentsContract.getDocumentId(uri);
+                    final String[] split = docId.split(":");
+                    final String type = split[0];
+                    Uri contentUri = null;
+                    if ("image".equals(type)) {
+                        contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                    } else if ("video".equals(type)) {
+                        contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                    } else if ("audio".equals(type)) {
+                        contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                    }
+                    final String selection = "_id=?";
+                    final String[] selectionArgs = new String[]{split[1]};
+                    path = getDataColumn(context, contentUri, selection, selectionArgs);
+                    return path;
+                }
+            } else if ("content".equalsIgnoreCase(uri.getScheme())) {
+                // Return the remote address
+                if (isGooglePhotosUri(uri))
+                    return uri.getLastPathSegment();
+
+                if (isQQMediaDocument(uri)) {
+                    String paths = uri.getPath();
+                    File fileDir = Environment.getExternalStorageDirectory();
+                    File file = new File(fileDir, paths.substring("/QQBrowser".length(), paths.length()));
+                    return file.exists() ? file.toString() : null;
+                }
+
+                return getDataColumn(context, uri, null, null);
+            } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+                return uri.getPath();
+            } else if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
+                //微信文件打开的uri
+                path = uri.getPath();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                        && path != null && path.startsWith("/external")) {
+                    return new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                            + path.replace("/external", "")).getPath();
+                } else {
+                    String[] paths = uri.getPath().split("/0/");
+                    if (paths.length == 2) {
+                        return Environment.getExternalStorageDirectory() + "/" + paths[1];
+                    }
+                }
+            } else {
+                String[] paths = uri.getPath().split("/0/");
+                if (paths.length == 2) {
+                    return Environment.getExternalStorageDirectory() + "/" + paths[1];
+                }
+
+            }
+        }
+        return null;
+    }
+
+    private static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {column};
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+
+    private static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+
+    private static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+
+    private static boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * 使用第三方qq文件管理器打开
+     *
+     * @param uri
+     * @return
+     */
+    public static boolean isQQMediaDocument(Uri uri) {
+        return "com.tencent.mtt.fileprovider".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is Google Photos.
+     */
+    public static boolean isGooglePhotosUri(Uri uri) {
+        return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
 }

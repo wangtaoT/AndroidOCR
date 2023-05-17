@@ -3,6 +3,7 @@ package com.wt.ocr;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
@@ -26,29 +27,26 @@ import com.wt.ocr.utils.Utils;
 /**
  * 显示截图结果
  * 并识别
- * Created by Administrator on 2016/12/10.
  */
-
 public class ShowCropperedActivity extends AppCompatActivity {
 
-    private              Context context;
+    private Context context;
     //sd卡路径
-    private static       String  LANGUAGE_PATH = "";
+    private static String LANGUAGE_PATH = "";
     //识别语言
-    private static final String  LANGUAGE      = "chi_sim";//chi_sim | eng
+    private static final String LANGUAGE = "chi_sim";//chi_sim | eng
+    private static final String TAG = "ShowCropperedActivity";
+    private ImageView imageView;
+    private ImageView imageView2;
+    private TextView textView;
 
-    private static final String    TAG = "ShowCropperedActivity";
-    private              ImageView imageView;
-    private              ImageView imageView2;
-    private              TextView  textView;
-
-    private int    width;
-    private int    height;
-    private Uri    uri;
+    private int width;
+    private int height;
+    private String path;
     private String result;
 
-    private TessBaseAPI    baseApi = new TessBaseAPI();
-    private Handler        handler = new Handler();
+    private TessBaseAPI baseApi = new TessBaseAPI();
+    private Handler handler = new Handler();
     private ProgressDialog dialog;
 
     private ColorMatrix colorMatrix;
@@ -63,21 +61,25 @@ public class ShowCropperedActivity extends AppCompatActivity {
 
         width = getIntent().getIntExtra("width", 0);
         height = getIntent().getIntExtra("height", 0);
-        uri = getIntent().getData();
+        path = getIntent().getStringExtra("path");
 
         initView();
         initTess();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        dialog = new ProgressDialog(context);
+        dialog.setMessage("正在识别...");
+        dialog.setCancelable(false);
+        dialog.show();
     }
 
     private void initView() {
         imageView = findViewById(R.id.image);
         imageView2 = findViewById(R.id.image2);
         textView = findViewById(R.id.text);
-
-        dialog = new ProgressDialog(context);
-        dialog.setMessage("正在识别...");
-        dialog.setCancelable(false);
-        dialog.show();
 
         if (width != 0 && height != 0) {
             int screenWidth = Utils.getWidthInPx(this);
@@ -88,7 +90,7 @@ public class ShowCropperedActivity extends AppCompatActivity {
             imageView.setLayoutParams(lp);
             Log.e(TAG, "imageView.getLayoutParams().width:" + imageView.getLayoutParams().width);
         }
-        imageView.setImageURI(uri);
+        imageView.setImageURI(Uri.parse(path));
     }
 
     private void initTess() {
@@ -100,21 +102,6 @@ public class ShowCropperedActivity extends AppCompatActivity {
         myThread.start();
     }
 
-
-    /**
-     * uri转bitmap
-     */
-    private Bitmap getBitmapFromUri(Uri uri) {
-        try {
-            // 读取uri所在的图片
-            return MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
-        } catch (Exception e) {
-            Log.e("[Android]", e.getMessage());
-            Log.e("[Android]", "目录为：" + uri);
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     /**
      * 灰度化处理
@@ -198,7 +185,7 @@ public class ShowCropperedActivity extends AppCompatActivity {
     private Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            final Bitmap bitmap_1 = convertGray(getBitmapFromUri(uri));
+            final Bitmap bitmap_1 = convertGray(BitmapFactory.decodeFile(path));
 
             baseApi.setImage(bitmap_1);
             result = baseApi.getUTF8Text();

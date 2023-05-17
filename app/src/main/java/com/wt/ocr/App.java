@@ -2,27 +2,24 @@ package com.wt.ocr;
 
 import android.app.Application;
 
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.Tracker;
+import androidx.annotation.NonNull;
+import androidx.camera.camera2.Camera2Config;
+import androidx.camera.core.CameraXConfig;
 
 /**
  * Created by wangt on 2018/3/2.
  */
 
-public class App extends Application {
-    private static GoogleAnalytics sAnalytics;
-    private static Tracker sTracker;
+public class App extends Application implements CameraXConfig.Provider {
 
     @Override
     public void onCreate() {
         super.onCreate();
-        sAnalytics = GoogleAnalytics.getInstance(this);
     }
 
-    synchronized public Tracker getDefaultTracker() {
-        if (sTracker == null) {
-            sTracker = sAnalytics.newTracker(R.xml.global_tracker);
-        }
-        return sTracker;
+    @NonNull
+    @Override
+    public CameraXConfig getCameraXConfig() {
+        return Camera2Config.defaultConfig();
     }
 }

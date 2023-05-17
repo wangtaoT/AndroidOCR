@@ -6,35 +6,43 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
-
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.text.format.DateFormat;
 import android.util.Log;
+import android.util.Size;
+import android.view.Surface;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.edmodo.cropper.CropImageView;
-import com.wt.ocr.camear.CameraPreview;
-import com.wt.ocr.camear.FocusView;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.AspectRatio;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.FocusMeteringAction;
+import androidx.camera.core.FocusMeteringResult;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.MeteringPoint;
+import androidx.camera.core.MeteringPointFactory;
+import androidx.camera.core.Preview;
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import com.wt.ocr.databinding.ActivityTakePhoteBinding;
 import com.wt.ocr.utils.Utils;
 
 import java.io.File;
@@ -42,33 +50,22 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 拍照界面
  * Created by Administrator on 2016/12/8.
  */
-public class TakePhoteActivity extends AppCompatActivity implements CameraPreview.OnCameraStatusListener, SensorEventListener {
+public class TakePhoteActivity extends AppCompatActivity {
 
-
-    private             Context context;
-    //true:横屏   false:竖屏
     public static final boolean isTransverse = true;
 
-    private static final String TAG       = "TakePhoteActivity";
-    public static final  Uri    IMAGE_URI = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+    private static final String TAG = "TakePhoteActivity";
+    public static final Uri IMAGE_URI = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+    private ImageCapture imageCapture;
 
-    private String PATH;
-
-    private CameraPreview  mCameraPreview;
-    private CropImageView  mCropImageView;
-    private RelativeLayout mTakePhotoLayout;
-    private LinearLayout   mCropperLayout;
-    private ImageView      btnClose;
-    private ImageView      btnShutter;
-    private Button         btnAlbum;
-    private ImageView      btnStartCropper;
-    private ImageView      btnCloseCropper;
-
+    private ActivityTakePhoteBinding mBinding;
 
     /**
      * 旋转文字
@@ -78,42 +75,16 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 设置横屏
-//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         // 设置全屏
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_take_phote);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_take_phote);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        context = this;
-        PATH = getExternalCacheDir() + "/AndroidMedia/";
+        mBinding.btnClose.setOnClickListener(onClickListener);
+        mBinding.btnShutter.setOnClickListener(onClickListener);
+        mBinding.btnAlbum.setOnClickListener(onClickListener);
 
-        btnClose = findViewById(R.id.btn_close);
-        btnClose.setOnClickListener(onClickListener);
-        btnShutter = findViewById(R.id.btn_shutter);
-        btnShutter.setOnClickListener(onClickListener);
-        btnAlbum = findViewById(R.id.btn_album);
-        btnAlbum.setOnClickListener(onClickListener);
-
-        btnStartCropper = findViewById(R.id.btn_startcropper);
-        btnStartCropper.setOnClickListener(cropcper);
-        btnCloseCropper = findViewById(R.id.btn_closecropper);
-        btnCloseCropper.setOnClickListener(cropcper);
-
-        mTakePhotoLayout = findViewById(R.id.take_photo_layout);
-        mCameraPreview = findViewById(R.id.cameraPreview);
-        FocusView focusView = findViewById(R.id.view_focus);
-
-        mCropperLayout = findViewById(R.id.cropper_layout);
-        mCropImageView = findViewById(R.id.CropImageView);
-        mCropImageView.setGuidelines(2);
-
-        mCameraPreview.setFocusView(focusView);
-        mCameraPreview.setOnCameraStatusListener(this);
-
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccel = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
+        startCamera();
     }
 
     @Override
@@ -135,46 +106,84 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                 animator1.setInterpolator(new LinearInterpolator());
                 animator1.start();
 
-                View view = findViewById(R.id.crop_hint);
-                AnimatorSet animSet = new AnimatorSet();
-                ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "rotation", 0f, 90f);
-                ObjectAnimator moveIn = ObjectAnimator.ofFloat(view, "translationX", 0f, -50f);
-                animSet.play(animator2).before(moveIn);
-                animSet.setDuration(10);
-                animSet.start();
-
-                ObjectAnimator animator3 = ObjectAnimator.ofFloat(btnAlbum, "rotation", 0f, 90f);
+                ObjectAnimator animator3 = ObjectAnimator.ofFloat(mBinding.btnAlbum, "rotation", 0f, 90f);
                 animator3.setStartDelay(800);
                 animator3.setDuration(500);
                 animator3.setInterpolator(new LinearInterpolator());
                 animator3.start();
                 isRotated = true;
             }
-        } else {
-            if (!isRotated) {
-                View view = findViewById(R.id.crop_hint);
-                AnimatorSet animSet = new AnimatorSet();
-                ObjectAnimator animator2 = ObjectAnimator.ofFloat(view, "rotation", 0f, 90f);
-                ObjectAnimator moveIn = ObjectAnimator.ofFloat(view, "translationX", 0f, -50f);
-                animSet.play(animator2).before(moveIn);
-                animSet.setDuration(10);
-                animSet.start();
-                isRotated = true;
-            }
         }
-        mSensorManager.registerListener(this, mAccel, SensorManager.SENSOR_DELAY_UI);
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mSensorManager.unregisterListener(this);
+    /**
+     * 开始预览
+     */
+    private void startCamera() {
+        // 将Camera的生命周期和Activity绑定在一起（设定生命周期所有者），这样就不用手动控制相机的启动和关闭。
+        ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+
+        cameraProviderFuture.addListener(() -> {
+            try {
+                // 将你的相机和当前生命周期的所有者绑定所需的对象
+                ProcessCameraProvider processCameraProvider = cameraProviderFuture.get();
+
+                // 创建一个Preview 实例，并设置该实例的 surface 提供者（provider）。
+                Preview preview = new Preview.Builder()
+                        .setTargetRotation(Surface.ROTATION_90)
+                        .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                        .build();
+                preview.setSurfaceProvider(mBinding.preview.getSurfaceProvider());
+
+                // 选择后置摄像头作为默认摄像头
+                CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+
+                // 创建拍照所需的实例
+                imageCapture = new ImageCapture.Builder()
+                        .setTargetRotation(Surface.ROTATION_90)
+                        .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                        .build();
+
+                // 重新绑定用例前先解绑
+                processCameraProvider.unbindAll();
+
+                // 绑定用例至相机
+                processCameraProvider.bindToLifecycle(this, cameraSelector,
+                        preview,
+                        imageCapture);
+
+            } catch (Exception e) {
+            }
+        }, ContextCompat.getMainExecutor(this));
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        Log.e(TAG, "onConfigurationChanged");
-        super.onConfigurationChanged(newConfig);
+    private void takePhoto() {
+        if (imageCapture != null) {
+            // 创建带时间戳的输出文件以保存图片，带时间戳是为了保证文件名唯一
+            File photoFile = new File(getCacheDir(), "/" + System.currentTimeMillis() + ".jpg");
+
+            // 创建 output option 对象，用以指定照片的输出方式
+            ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions
+                    .Builder(photoFile)
+                    .build();
+
+            // 执行takePicture（拍照）方法
+            imageCapture.takePicture(outputFileOptions,
+                    ContextCompat.getMainExecutor(this),
+                    new ImageCapture.OnImageSavedCallback() {// 保存照片时的回调
+                        @Override
+                        public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                            Uri savedUri = Uri.fromFile(photoFile);
+                            String msg = "照片捕获成功! " + savedUri;
+                            Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
+                            launchActivity(savedUri);
+                        }
+
+                        @Override
+                        public void onError(@NonNull ImageCaptureException exception) {
+                        }
+                    });
+        }
     }
 
     /**
@@ -188,17 +197,12 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
                     finish();
                     break;
                 case R.id.btn_shutter: //拍照
-                    if (mCameraPreview != null) {
-                        mCameraPreview.takePicture();
-                    }
+                    takePhoto();
                     break;
                 case R.id.btn_album: //相册
                     Intent intent = new Intent();
-                    /* 开启Pictures画面Type设定为image */
                     intent.setType("image/*");
-                    /* 使用Intent.ACTION_GET_CONTENT这个Action */
                     intent.setAction(Intent.ACTION_GET_CONTENT);
-                    /* 取得相片后返回本画面 */
                     startActivityForResult(intent, 1);
                     break;
             }
@@ -206,179 +210,23 @@ public class TakePhoteActivity extends AppCompatActivity implements CameraPrevie
     };
 
     /**
-     * 截图界面
-     */
-    private View.OnClickListener cropcper = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            switch (view.getId()) {
-                case R.id.btn_closecropper:
-                    showTakePhotoLayout();
-                    break;
-                case R.id.btn_startcropper:
-                    //获取截图并旋转90度
-                    Bitmap cropperBitmap = mCropImageView.getCroppedImage();
-
-                    Bitmap bitmap;
-                    bitmap = Utils.rotate(cropperBitmap, -90);
-
-                    // 系统时间
-                    long dateTaken = System.currentTimeMillis();
-                    // 图像名称
-                    String filename = DateFormat.format("yyyy-MM-dd kk.mm.ss", dateTaken).toString() + ".jpg";
-                    Uri uri = insertImage(getContentResolver(), filename, dateTaken, PATH, filename, bitmap, null);
-
-                    Intent intent = new Intent(context, ShowCropperedActivity.class);
-                    intent.setData(uri);
-                    intent.putExtra("path", PATH + filename);
-                    intent.putExtra("width", bitmap.getWidth());
-                    intent.putExtra("height", bitmap.getHeight());
-//                  intent.putExtra("cropperImage", bitmap);
-                    startActivity(intent);
-                    bitmap.recycle();
-                    finish();
-                    break;
-            }
-        }
-    };
-
-    /**
-     * 拍照成功后回调
-     * 存储图片并显示截图界面
-     */
-    @Override
-    public void onCameraStopped(byte[] data) {
-        Log.i("TAG", "==onCameraStopped==");
-        // 创建图像
-        Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-
-        if (!isTransverse) {
-            bitmap = Utils.rotate(bitmap, 90);
-        }
-        // 系统时间
-        long dateTaken = System.currentTimeMillis();
-        // 图像名称
-        String filename = DateFormat.format("yyyy-MM-dd kk.mm.ss", dateTaken).toString() + ".jpg";
-        // 存储图像（PATH目录）
-        Uri source = insertImage(getContentResolver(), filename, dateTaken, PATH, filename, bitmap, data);
-
-        //准备截图
-        bitmap = Utils.rotate(bitmap, 90);
-        mCropImageView.setImageBitmap(bitmap);
-        showCropperLayout();
-    }
-
-    /*
      * 获取图片回调
-     * */
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             Uri uri = data.getData();
             Log.e("uri", uri.toString());
-            ContentResolver cr = this.getContentResolver();
-            try {
-                Bitmap bitmap = BitmapFactory.decodeStream(cr.openInputStream(uri));
-                //与拍照保持一致方便处理
-                bitmap = Utils.rotate(bitmap, 90);
-                mCropImageView.setImageBitmap(bitmap);
-            } catch (Exception e) {
-                Log.e("Exception", e.getMessage(), e);
-            }
+            launchActivity(uri);
         }
         super.onActivityResult(requestCode, resultCode, data);
-        showCropperLayout();
     }
 
-    /**
-     * 存储图像并将信息添加入媒体数据库
-     */
-    private Uri insertImage(ContentResolver cr, String name, long dateTaken,
-                            String directory, String filename, Bitmap source, byte[] jpegData) {
-        OutputStream outputStream = null;
-        String filePath = directory + filename;
-        try {
-            File dir = new File(directory);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            File file = new File(directory, filename);
-            if (file.createNewFile()) {
-                outputStream = new FileOutputStream(file);
-                if (source != null) {
-                    source.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-                } else {
-                    outputStream.write(jpegData);
-                }
-            }
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
-            return null;
-        } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (Throwable t) {
-                }
-            }
-        }
-        ContentValues values = new ContentValues(7);
-        values.put(MediaStore.Images.Media.TITLE, name);
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, filename);
-        values.put(MediaStore.Images.Media.DATE_TAKEN, dateTaken);
-        values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-        values.put(MediaStore.Images.Media.DATA, filePath);
-        return cr.insert(IMAGE_URI, values);
+    private void launchActivity(Uri uri) {
+        String path = Utils.getFilePathByUri(this, uri);
+        Intent intent = new Intent(this, CutOutPhotoActivity.class);
+        intent.putExtra("path", path);
+        startActivity(intent);
     }
 
-    private void showTakePhotoLayout() {
-        mTakePhotoLayout.setVisibility(View.VISIBLE);
-        mCropperLayout.setVisibility(View.GONE);
-    }
-
-    private void showCropperLayout() {
-        mTakePhotoLayout.setVisibility(View.GONE);
-        mCropperLayout.setVisibility(View.VISIBLE);
-        mCameraPreview.start();   //继续启动摄像头
-    }
-
-
-    private float         mLastX       = 0;
-    private float         mLastY       = 0;
-    private float         mLastZ       = 0;
-    private boolean       mInitialized = false;
-    private SensorManager mSensorManager;
-    private Sensor        mAccel;
-
-
-    /**
-     * 位移 自动对焦
-     */
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-
-        float x = event.values[0];
-        float y = event.values[1];
-        float z = event.values[2];
-        if (!mInitialized) {
-            mLastX = x;
-            mLastY = y;
-            mLastZ = z;
-            mInitialized = true;
-        }
-        float deltaX = Math.abs(mLastX - x);
-        float deltaY = Math.abs(mLastY - y);
-        float deltaZ = Math.abs(mLastZ - z);
-
-        if (deltaX > 0.8 || deltaY > 0.8 || deltaZ > 0.8) {
-            mCameraPreview.setFocus();
-        }
-        mLastX = x;
-        mLastY = y;
-        mLastZ = z;
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
 }

@@ -1,20 +1,18 @@
 package com.wt.ocr;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.Toast;
-
-import com.google.android.gms.analytics.HitBuilders;
+import androidx.databinding.DataBindingUtil;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.wt.ocr.databinding.ActivityMainBinding;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,22 +21,22 @@ import java.io.InputStream;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
-    private static final int PERMISSIONS_REQUEST_CAMERA        = 454;
-    private static final int PERMISSIONS_REQUEST_WRITE_STORAGE = 455;
+    private static final int PERMISSIONS_REQUEST_CAMERA = 454;
 
-    static final String  PERMISSION_CAMERA        = Manifest.permission.CAMERA;
-    static final String  PERMISSION_WRITE_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
-    private      Context context;
+    static final String PERMISSION_CAMERA = Manifest.permission.CAMERA;
+    static final String PERMISSION_WRITE_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
-    private ImageView imageView;
+    private FirebaseAnalytics mFirebaseAnalytics;
+
+    private ActivityMainBinding mBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        context = this;
-        imageView = findViewById(R.id.btn_camera);
-        imageView.setOnClickListener(this);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
+        mBinding.btnCamera.setOnClickListener(this);
 
         new Thread(new Runnable() {
             @Override
@@ -46,18 +44,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 deepFile("tessdata");
             }
         }).start();
-
-        sendScreenImageName();
     }
 
     public void onClick(View view) {
         if (view.getId() == R.id.btn_camera) {
             checkSelfPermission();
             //google分析
-            getTracker().send(new HitBuilders.EventBuilder()
-                    .setCategory("Action")
-                    .setAction("拍照")
-                    .build());
+            Bundle bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "main");
+            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "拍照");
+            bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "Action");
+            mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
         }
     }
 
@@ -98,22 +95,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
 
-    //google分析
-    private void sendScreenImageName() {
-        getTracker().setScreenName("Activity-" + "首页");
-        getTracker().send(new HitBuilders.ScreenViewBuilder().build());
-    }
-
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSIONS_REQUEST_CAMERA || requestCode == PERMISSIONS_REQUEST_WRITE_STORAGE) {
+        if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Intent intent = new Intent(context, TakePhoteActivity.class);
+                Intent intent = new Intent(this, TakePhoteActivity.class);
                 startActivity(intent);
             } else {
-                Toast.makeText(context, "请开启权限", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "请开启权限", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -122,12 +112,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      * 检查权限
      */
     void checkSelfPermission() {
-        if (ContextCompat.checkSelfPermission(this, PERMISSION_CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{PERMISSION_CAMERA}, PERMISSIONS_REQUEST_CAMERA);
-        } else if (ContextCompat.checkSelfPermission(this, PERMISSION_WRITE_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{PERMISSION_WRITE_STORAGE}, PERMISSIONS_REQUEST_WRITE_STORAGE);
+        if (ContextCompat.checkSelfPermission(this, PERMISSION_CAMERA) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, PERMISSION_WRITE_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{PERMISSION_CAMERA, PERMISSION_WRITE_STORAGE}, PERMISSIONS_REQUEST_CAMERA);
         } else {
-            Intent intent = new Intent(context, TakePhoteActivity.class);
+            Intent intent = new Intent(this, TakePhoteActivity.class);
             startActivity(intent);
         }
     }
