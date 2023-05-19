@@ -39,7 +39,7 @@ dependencies {
     //图像裁剪
     implementation 'com.edmodo:cropper:1.0.1'
     //文字识别
-    implementation 'com.rmtheis:tess-two:6.1.1'
+    implementation 'cz.adaptech.tesseract4android:tesseract4android:4.4.0'
 
     //google分析
     implementation platform('com.google.firebase:firebase-bom:31.5.0')

@@ -1,19 +1,11 @@
 package com.wt.ocr;
 
-import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.util.Size;
 import android.view.Surface;
 import android.view.View;
 import android.view.Window;
@@ -21,23 +13,15 @@ import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.AspectRatio;
 import androidx.camera.core.CameraSelector;
-import androidx.camera.core.FocusMeteringAction;
-import androidx.camera.core.FocusMeteringResult;
-import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.MeteringPoint;
-import androidx.camera.core.MeteringPointFactory;
 import androidx.camera.core.Preview;
-import androidx.camera.core.SurfaceOrientedMeteringPointFactory;
 import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
@@ -46,12 +30,6 @@ import com.wt.ocr.databinding.ActivityTakePhoteBinding;
 import com.wt.ocr.utils.Utils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 拍照界面
@@ -174,8 +152,6 @@ public class TakePhoteActivity extends AppCompatActivity {
                         @Override
                         public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
                             Uri savedUri = Uri.fromFile(photoFile);
-                            String msg = "照片捕获成功! " + savedUri;
-                            Toast.makeText(getBaseContext(), msg, Toast.LENGTH_SHORT).show();
                             launchActivity(savedUri);
                         }
 

@@ -11,7 +11,6 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.MediaStore;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -189,7 +188,7 @@ public class ShowCropperedActivity extends AppCompatActivity {
 
             baseApi.setImage(bitmap_1);
             result = baseApi.getUTF8Text();
-            baseApi.end();
+            baseApi.recycle();
 
             handler.post(new Runnable() {
                 @Override
