@@ -13,6 +13,7 @@ import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,7 +28,7 @@ import androidx.databinding.DataBindingUtil;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.wt.ocr.databinding.ActivityTakePhoteBinding;
-import com.wt.ocr.utils.Utils;
+import com.wt.ocr.utils.UriUtils;
 
 import java.io.File;
 
@@ -199,7 +200,11 @@ public class TakePhoteActivity extends AppCompatActivity {
     }
 
     private void launchActivity(Uri uri) {
-        String path = Utils.getFilePathByUri(this, uri);
+        String path = UriUtils.getFileFromUri(this, uri);
+        if (path == null) {
+            Toast.makeText(this, "文件已损坏", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intent = new Intent(this, CutOutPhotoActivity.class);
         intent.putExtra("path", path);
         startActivity(intent);
